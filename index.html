@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zamplia</title>
+      <link rel="icon" type="image/png" href="https://cdn.dribbble.com/users/7549673/screenshots/17206704/media/1210a9d0ec8af427967e735935861eeb.png?resize=400x300&vertical=center" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+        :root {
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --background: #0f172a;
+            --surface: #1e293b;
+            --text: #f8fafc;
+            --text-light: #94a3b8;
+            --border: #334155;
+            --success: #22c55e;
+            --error: #ef4444;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--background);
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+        }
+
+        .container {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.25);
+            width: 100%;
+            max-width: 480px;
+            margin: 1rem;
+        }
+
+        h1 {
+            color: var(--text);
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        input {
+            width: 90%;
+            padding: 0.875rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            background: var(--background);
+            color: var(--text);
+            transition: all 0.2s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.875rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+        }
+
+        .result-section {
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .result-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .result-label {
+            color: var(--text-light);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-content {
+            background: var(--background);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .result-content:hover {
+            border-color: var(--primary);
+        }
+
+        .result-text {
+            font-size: 0.875rem;
+            color: var(--text);
+            word-break: break-all;
+            padding-right: 1rem;
+        }
+
+        .message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            display: none;
+        }
+
+        .message.success {
+            background: #14532d;
+            color: var(--success);
+            border: 1px solid #22c55e;
+        }
+
+        .message.error {
+            background: #7f1d1d;
+            color: var(--error);
+            border: 1px solid #ef4444;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>•- Zamplia -•</h1>
+        
+        <div class="input-group">
+            <input type="url" id="inputUrl" 
+                   placeholder="Pega la URL aquí..."
+                   autocomplete="off">
+        </div>
+
+        <button onclick="processUrl()">Generar Enlace</button>
+
+        <div id="resultSection" class="result-section">
+            <div class="result-label">Enlace generado:</div>
+            <div class="result-content" onclick="copyGeneratedLink()">
+                <span id="generatedLink" class="result-text"></span>
+            </div>
+        </div>
+
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        let inactivityTimer;
+        const inactivityDelay = 30000; // 30 segundos
+
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(clearFields, inactivityDelay);
+        }
+
+        function clearFields() {
+            document.getElementById('inputUrl').value = '';
+            document.getElementById('generatedLink').textContent = '';
+            document.getElementById('resultSection').classList.remove('active');
+            document.getElementById('message').style.display = 'none';
+        }
+
+        function showMessage(text, type) {
+            const message = document.getElementById('message');
+            message.className = `message ${type}`;
+            message.textContent = text;
+            message.style.display = 'block';
+            
+            // Ocultar el mensaje después de 30 segundos
+            setTimeout(() => {
+                message.style.opacity = '0';
+                setTimeout(() => {
+                    message.style.display = 'none';
+                    message.style.opacity = '1';
+                }, 300);
+            }, inactivityDelay);
+        }
+
+        function processUrl() {
+            const inputUrl = document.getElementById('inputUrl').value;
+            const resultSection = document.getElementById('resultSection');
+            const generatedLink = document.getElementById('generatedLink');
+
+            try {
+                const url = new URL(inputUrl);
+                const uid = url.searchParams.get('UID');
+
+                if (!uid || !/^\d+$/.test(uid)) {
+                    throw new Error('No se encontró un UID válido en la URL');
+                }
+
+                // Generar el enlace completo
+                const completeLink = `https://zampcomplete.zamplia.com/?UID=${uid}`;
+                generatedLink.textContent = completeLink;
+                resultSection.classList.add('active');
+                showMessage('Enlace generado y copiado automáticamente', 'success');
+                
+                // Copiar automáticamente al portapapeles
+                navigator.clipboard.writeText(completeLink);
+
+                // Reiniciar el temporizador de inactividad
+                resetInactivityTimer();
+
+            } catch (error) {
+                resultSection.classList.remove('active');
+                showMessage(error.message, 'error');
+            }
+        }
+
+        function copyGeneratedLink() {
+            const link = document.getElementById('generatedLink').textContent;
+            navigator.clipboard.writeText(link);
+            showMessage('Enlace copiado al portapapeles', 'success');
+            resetInactivityTimer(); // Reiniciar el temporizador al copiar manualmente
+        }
+
+        // Reiniciar el temporizador al detectar actividad del usuario
+        document.addEventListener('mousemove', resetInactivityTimer);
+        document.addEventListener('keypress', resetInactivityTimer);
+    </script>
+</body>
+</html>
