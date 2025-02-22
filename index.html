@@ -4,20 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zamplia</title>
-      <link rel="icon" type="image/png" href="https://cdn.dribbble.com/users/7549673/screenshots/17206704/media/1210a9d0ec8af427967e735935861eeb.png?resize=400x300&vertical=center" />
+    <link rel="icon" type="image/png" href="https://cdn.dribbble.com/users/7549673/screenshots/17206704/media/1210a9d0ec8af427967e735935861eeb.png?resize=400x300&vertical=center" />
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
         :root {
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
-            --background: #0f172a;
-            --surface: #1e293b;
-            --text: #f8fafc;
-            --text-light: #94a3b8;
-            --border: #334155;
-            --success: #22c55e;
-            --error: #ef4444;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --background: #09090b;
+            --surface: #18181b;
+            --text: #fafafa;
+            --text-light: #a1a1aa;
+            --border: #3f3f46;
+            --success: #16a34a;
+            --error: #dc2626;
         }
 
         body {
@@ -29,16 +29,21 @@
             background: var(--background);
             font-family: 'Inter', sans-serif;
             color: var(--text);
+            padding: 1rem;
+            box-sizing: border-box;
+            overflow-y: hidden;
         }
 
         .container {
             background: var(--surface);
             padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.25);
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
             width: 100%;
             max-width: 480px;
-            margin: 1rem;
+            border: 1px solid var(--border);
+            max-height: 95vh;
+            overflow-y: auto;
         }
 
         h1 {
@@ -67,7 +72,7 @@
         input:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
 
         button {
@@ -136,19 +141,30 @@
 
         .message.success {
             background: #14532d;
-            color: var(--success);
+            color: #86efac;
             border: 1px solid #22c55e;
         }
 
         .message.error {
             background: #7f1d1d;
-            color: var(--error);
+            color: #fca5a5;
             border: 1px solid #ef4444;
         }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-height: 600px) {
+            .container {
+                padding: 1.5rem;
+                max-height: 98vh;
+            }
+            h1 {
+                font-size: 1.25rem;
+                margin-bottom: 1rem;
+            }
         }
     </style>
 </head>
@@ -175,8 +191,61 @@
     </div>
 
     <script>
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                return true;
+            } catch (error) {
+                try {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    return true;
+                } catch (error) {
+                    return false;
+                }
+            }
+        }
+
+        async function processUrl() {
+            const inputUrl = document.getElementById('inputUrl').value;
+            const resultSection = document.getElementById('resultSection');
+            const generatedLink = document.getElementById('generatedLink');
+
+            try {
+                const url = new URL(inputUrl);
+                const params = new URLSearchParams(url.search);
+                let foundNumber = null;
+
+                params.forEach((value) => {
+                    if (/^9\d{7}$/.test(value)) {
+                        foundNumber = value;
+                    }
+                });
+
+                if (!foundNumber) throw new Error('No se encontró número válido (8 dígitos que empiezan con 9)');
+
+                const completeLink = `https://zampcomplete.zamplia.com/?UID=${foundNumber}`;
+                generatedLink.textContent = completeLink;
+                resultSection.classList.add('active');
+
+                const success = await copyToClipboard(completeLink);
+                if (!success) throw new Error('No se pudo copiar automáticamente. Haz clic manualmente');
+
+                showMessage('Enlace generado y copiado!', 'success');
+                resetInactivityTimer();
+
+            } catch (error) {
+                resultSection.classList.remove('active');
+                showMessage(error.message, 'error');
+            }
+        }
+
         let inactivityTimer;
-        const inactivityDelay = 30000; // 30 segundos
+        const inactivityDelay = 30000;
 
         function resetInactivityTimer() {
             clearTimeout(inactivityTimer);
@@ -196,55 +265,22 @@
             message.textContent = text;
             message.style.display = 'block';
             
-            // Ocultar el mensaje después de 30 segundos
             setTimeout(() => {
                 message.style.opacity = '0';
                 setTimeout(() => {
                     message.style.display = 'none';
                     message.style.opacity = '1';
                 }, 300);
-            }, inactivityDelay);
+            }, 5000);
         }
 
-        function processUrl() {
-            const inputUrl = document.getElementById('inputUrl').value;
-            const resultSection = document.getElementById('resultSection');
-            const generatedLink = document.getElementById('generatedLink');
-
-            try {
-                const url = new URL(inputUrl);
-                const uid = url.searchParams.get('UID');
-
-                if (!uid || !/^\d+$/.test(uid)) {
-                    throw new Error('No se encontró un UID válido en la URL');
-                }
-
-                // Generar el enlace completo
-                const completeLink = `https://zampcomplete.zamplia.com/?UID=${uid}`;
-                generatedLink.textContent = completeLink;
-                resultSection.classList.add('active');
-                showMessage('Enlace generado y copiado automáticamente', 'success');
-                
-                // Copiar automáticamente al portapapeles
-                navigator.clipboard.writeText(completeLink);
-
-                // Reiniciar el temporizador de inactividad
-                resetInactivityTimer();
-
-            } catch (error) {
-                resultSection.classList.remove('active');
-                showMessage(error.message, 'error');
-            }
-        }
-
-        function copyGeneratedLink() {
+        async function copyGeneratedLink() {
             const link = document.getElementById('generatedLink').textContent;
-            navigator.clipboard.writeText(link);
-            showMessage('Enlace copiado al portapapeles', 'success');
-            resetInactivityTimer(); // Reiniciar el temporizador al copiar manualmente
+            const success = await copyToClipboard(link);
+            showMessage(success ? '¡Copiado!' : 'Error al copiar', success ? 'success' : 'error');
+            resetInactivityTimer();
         }
 
-        // Reiniciar el temporizador al detectar actividad del usuario
         document.addEventListener('mousemove', resetInactivityTimer);
         document.addEventListener('keypress', resetInactivityTimer);
     </script>
