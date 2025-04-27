@@ -221,12 +221,12 @@
                 let foundNumber = null;
 
                 params.forEach((value) => {
-                    if (/^9\d{7}$/.test(value)) {
+                    if (/^1\d{8}$/.test(value)) {
                         foundNumber = value;
                     }
                 });
 
-                if (!foundNumber) throw new Error('No se encontró número válido (8 dígitos que empiezan con 9)');
+                if (!foundNumber) throw new Error('No se encontró número válido (9 dígitos que empiezan con 1)');
 
                 const completeLink = `https://zampcomplete.zamplia.com/?UID=${foundNumber}`;
                 generatedLink.textContent = completeLink;
